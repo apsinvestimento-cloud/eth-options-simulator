@@ -105,6 +105,8 @@ instrument = next(
 
 premium, iv = get_option_market(instrument["instrument_name"])
 
+premium_usd = premium * spot_price
+
 st.write(f"IV: {iv*100:.1f}%")
 st.write(f"Premium: {premium:.4f} ETH")
 
@@ -133,9 +135,11 @@ if st.button("Adicionar perna"):
         "side": side,
         "strike": strike,
         "premium": premium,
+        "premium_usd": premium_usd,
         "quantity": quantity,
         "enabled": True
     })
+
 
 # =========================
 # LISTA DE PERNAS
@@ -157,7 +161,10 @@ for i, leg in enumerate(st.session_state.legs):
     col2.write(f"{leg['side'].upper()} {leg['type'].upper()}")
     col3.write(f"Strike {leg['strike']}")
     col4.write(f"Qty {leg['quantity']}")
-    col5.write(f"Premium {leg['premium']:.4f}")
+    col5.write(
+        f"{leg['premium']:.4f} ETH  (~${leg.get('premium_usd', leg['premium']*spot_price):.2f})"
+    )
+
 
     if col6.button("❌", key=f"remove_{i}"):
         legs_to_remove = i
@@ -277,3 +284,4 @@ if st.button("Simular estratégia"):
     fig.update_layout(template="plotly_dark", height=500)
 
     st.plotly_chart(fig, use_container_width=True)
+
