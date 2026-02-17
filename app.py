@@ -6,6 +6,7 @@ import math
 import time
 from datetime import datetime
 
+
 st.set_page_config(page_title="ETH Options Simulator", layout="wide")
 
 st.title("ETH Options Simulator")
@@ -284,4 +285,5 @@ if st.button("Simular estratégia"):
     fig.update_layout(template="plotly_dark", height=500)
 
     st.plotly_chart(fig, use_container_width=True)
+
 
