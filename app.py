@@ -221,20 +221,19 @@ if st.button("Simular estratégia"):
 
     for leg in active_legs:
 
-        if leg["type"] == "call":
-            payoff = np.maximum(prices - leg["strike"], 0)
-        else:
-            payoff = np.maximum(leg["strike"] - prices, 0)
+    if leg["type"] == "call":
+        payoff = np.maximum(prices - leg["strike"], 0)
+    else:
+        payoff = np.maximum(leg["strike"] - prices, 0)
 
-        if leg["side"] == "buy":
-            payoff = payoff - leg["premium"]
-        else:
-            payoff = leg["premium"] - payoff
+    if leg["side"] == "buy":
+        payoff = payoff - leg["premium"]
+    else:
+        payoff = leg["premium"] - payoff
 
-        payoff = payoff * leg["quantity"]
-        total_payoff += payoff
+    payoff = payoff * leg["quantity"]
+    total_payoff += payoff
 
-    payoff = total_payoff
 
     # =========================
     # MÉTRICAS
@@ -298,6 +297,7 @@ if st.button("Simular estratégia"):
     fig.update_layout(template="plotly_dark", height=500)
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
