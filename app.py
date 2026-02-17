@@ -217,33 +217,40 @@ if st.button("Simular estratégia"):
 
 if st.session_state.run_simulation:
 
+    # Pernas ativas
     active_legs = [leg for leg in st.session_state.legs if leg["enabled"]]
 
     if not active_legs:
         st.warning("Nenhuma perna ativa")
         st.stop()
 
+    # =========================
+    # CÁLCULO DO PAYOFF
+    # =========================
     spot = spot_price
     prices = np.linspace(0.01, spot * 2, 400)
     total_payoff = np.zeros_like(prices)
 
     for leg in active_legs:
 
+        # Intrínseco
         if leg["type"] == "call":
             intrinsic = np.maximum(prices - leg["strike"], 0)
         else:
             intrinsic = np.maximum(leg["strike"] - prices, 0)
 
-    premium_usd = leg["premium"] * spot
+        # Premium em USD
+        premium_usd = leg["premium"] * spot
 
-    if leg["side"] == "buy":
-        payoff = intrinsic - premium_usd
-    else:
-        payoff = premium_usd - intrinsic
+        # Payoff
+        if leg["side"] == "buy":
+            payoff_leg = intrinsic - premium_usd
+        else:
+            payoff_leg = premium_usd - intrinsic
 
-    payoff = payoff * leg["quantity"]
+        payoff_leg = payoff_leg * leg["quantity"]
 
-    total_payoff += payoff
+        total_payoff += payoff_leg
 
     payoff = total_payoff
 
@@ -316,6 +323,7 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot*0.5, spot*1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
