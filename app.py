@@ -223,16 +223,16 @@ if st.session_state.run_simulation:
         st.warning("Nenhuma perna ativa")
         st.stop()
 
-spot = spot_price
-prices = np.linspace(0.01, spot * 2, 400)
-total_payoff = np.zeros_like(prices)
+    spot = spot_price
+    prices = np.linspace(0.01, spot * 2, 400)
+    total_payoff = np.zeros_like(prices)
 
-for leg in active_legs:
+    for leg in active_legs:
 
-    if leg["type"] == "call":
-        intrinsic = np.maximum(prices - leg["strike"], 0)
-    else:
-        intrinsic = np.maximum(leg["strike"] - prices, 0)
+        if leg["type"] == "call":
+            intrinsic = np.maximum(prices - leg["strike"], 0)
+        else:
+            intrinsic = np.maximum(leg["strike"] - prices, 0)
 
     premium_usd = leg["premium"] * spot
 
@@ -316,6 +316,7 @@ for leg in active_legs:
     fig.update_xaxes(range=[spot*0.5, spot*1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
