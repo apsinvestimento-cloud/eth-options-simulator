@@ -6,6 +6,8 @@ import math
 import time
 from datetime import datetime
 
+# Auto refresh a cada 30 segundos
+st.autorefresh(interval=30 * 1000, key="refresh")
 
 st.set_page_config(page_title="ETH Options Simulator", layout="wide")
 
@@ -122,6 +124,15 @@ quantity = st.number_input(
     step=0.1,
     format="%.1f"
 )
+
+# ===== Custo da perna (dinâmico) =====
+position_cost = premium * quantity * spot_price
+
+if side == "buy":
+    st.success(f"Débito: ${position_cost:,.2f}")
+else:
+    st.warning(f"Crédito: ${position_cost:,.2f}")
+
 
 # =========================
 # SESSION STATE
@@ -285,5 +296,6 @@ if st.button("Simular estratégia"):
     fig.update_layout(template="plotly_dark", height=500)
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
