@@ -5,13 +5,15 @@ import numpy as np
 import math
 import time
 from datetime import datetime
+from streamlit_autorefresh import st_autorefresh
 
-# Auto refresh a cada 30 segundos
-st.autorefresh(interval=30 * 1000, key="refresh")
 
 st.set_page_config(page_title="ETH Options Simulator", layout="wide")
 
 st.title("ETH Options Simulator")
+
+# Atualiza a cada 30 segundos
+st_autorefresh(interval=30 * 1000, key="refresh")
 
 # =========================
 # CACHE (importante para Cloud)
@@ -296,6 +298,7 @@ if st.button("Simular estratégia"):
     fig.update_layout(template="plotly_dark", height=500)
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
