@@ -216,23 +216,32 @@ if st.button("Simular estratégia"):
         st.stop()
 
     spot = spot_price
-    prices = np.linspace(spot * 0.5, spot * 1.5, 200)
+    prices = np.linspace(spot * 0.7, spot * 1.3, 200)
     total_payoff = np.zeros_like(prices)
 
-    for leg in active_legs:
+    for leg in active_legs:   # ← ESTE FOR
 
-    if leg["type"] == "call":
-        payoff = np.maximum(prices - leg["strike"], 0)
-    else:
-        payoff = np.maximum(leg["strike"] - prices, 0)
+        # Payoff base (USD)
+        if leg["type"] == "call":
+            payoff = np.maximum(prices - leg["strike"], 0)
+        else:
+            payoff = np.maximum(leg["strike"] - prices, 0)
 
-    if leg["side"] == "buy":
-        payoff = payoff - leg["premium"]
-    else:
-        payoff = leg["premium"] - payoff
+        # Converter premium (ETH → USD)
+        premium_usd = leg["premium"] * spot
 
-    payoff = payoff * leg["quantity"]
-    total_payoff += payoff
+        # Aplicar lado
+        if leg["side"] == "buy":
+            payoff = payoff - premium_usd
+        else:
+            payoff = premium_usd - payoff
+
+        # Quantidade
+        payoff = payoff * leg["quantity"]
+
+        total_payoff += payoff
+
+    payoff = total_payoff
 
 
     # =========================
@@ -297,6 +306,7 @@ if st.button("Simular estratégia"):
     fig.update_layout(template="plotly_dark", height=500)
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
