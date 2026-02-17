@@ -131,9 +131,9 @@ quantity = st.number_input(
 position_cost = premium * quantity * spot_price
 
 if side == "buy":
-    st.success(f"Débito: ${position_cost:,.2f}")
+    st.error(f"Débito total: -${position_cost:,.2f}")
 else:
-    st.warning(f"Crédito: ${position_cost:,.2f}")
+    st.success(f"Crédito total: +${position_cost:,.2f}")
 
 
 # =========================
@@ -298,6 +298,7 @@ if st.button("Simular estratégia"):
     fig.update_layout(template="plotly_dark", height=500)
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
