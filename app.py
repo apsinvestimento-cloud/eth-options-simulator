@@ -312,7 +312,11 @@ payoff = total_payoff
 
     fig.update_layout(template="plotly_dark", height=500)
 
+    # Limita o zoom visual do eixo X (apenas visual)
+    fig.update_xaxes(range=[spot*0.5, spot*1.5])
+
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
