@@ -47,6 +47,8 @@ def get_option_market(instrument_name):
 
 # =========================
 # SPOT
+# =========================# =========================
+# SPOT
 # =========================
 spot_price = get_spot()
 st.metric("ETH Spot", f"${spot_price:,.2f}")
@@ -54,155 +56,141 @@ st.metric("ETH Spot", f"${spot_price:,.2f}")
 st.write("Simulador de estratégias multi-perna com dados da Deribit")
 
 # =========================
-# INSTRUMENTOS
+# LAYOUT PRINCIPAL
 # =========================
-instruments = get_instruments()
-
-# Expirações
-expirations = sorted(list(set([inst["expiration_timestamp"] for inst in instruments])))
-
-exp_list = [
-    {
-        "timestamp": exp,
-        "date": datetime.utcfromtimestamp(exp / 1000).strftime("%Y-%m-%d")
-    }
-    for exp in expirations
-]
-
-exp_dates = [exp["date"] for exp in exp_list]
-selected_date = st.selectbox("Vencimento", exp_dates)
-
-expiration = next(
-    exp["timestamp"] for exp in exp_list if exp["date"] == selected_date
-)
+left, right = st.columns([1, 1])
 
 # =========================
-# TIPO
+# COLUNA ESQUERDA — MONTAR PERNA
 # =========================
-option_type = st.selectbox("Tipo", ["call", "put"])
+with left:
 
-# =========================
-# STRIKES
-# =========================
-filtered = [
-    inst for inst in instruments
-    if inst["expiration_timestamp"] == expiration
-    and inst["option_type"] == option_type
-]
+    st.subheader("Adicionar perna")
 
-strike_list = sorted([inst["strike"] for inst in filtered])
+    instruments = get_instruments()
 
-atm_strike = min(strike_list, key=lambda x: abs(x - spot_price))
-atm_index = strike_list.index(atm_strike)
+    expirations = sorted(list(set([inst["expiration_timestamp"] for inst in instruments])))
 
-strike = st.selectbox(
-    "Strike (ATM sugerido)",
-    strike_list,
-    index=atm_index
-)
+    exp_list = [
+        {
+            "timestamp": exp,
+            "date": datetime.utcfromtimestamp(exp / 1000).strftime("%Y-%m-%d")
+        }
+        for exp in expirations
+    ]
 
-# =========================
-# PREMIUM + IV
-# =========================
-instrument = next(
-    inst for inst in filtered if inst["strike"] == strike
-)
+    exp_dates = [exp["date"] for exp in exp_list]
+    selected_date = st.selectbox("Vencimento", exp_dates)
 
-premium, iv = get_option_market(instrument["instrument_name"])
-
-premium_usd = premium * spot_price
-
-st.write(f"IV: {iv*100:.1f}%")
-st.write(f"Premium: {premium:.4f} ETH")
-
-# =========================
-# POSIÇÃO
-# =========================
-side = st.selectbox("Posição", ["buy", "sell"])
-quantity = st.number_input(
-    "Quantidade (contratos)",
-    min_value=0.1,
-    value=0.1,
-    step=0.1,
-    format="%.1f"
-)
-
-# ===== Custo da perna (dinâmico) =====
-position_cost = premium * quantity * spot_price
-
-if side == "buy":
-    st.error(f"Débito total: -${position_cost:,.2f}")
-else:
-    st.success(f"Crédito total: +${position_cost:,.2f}")
-
-
-# =========================
-# SESSION STATE
-# =========================
-if "legs" not in st.session_state:
-    st.session_state.legs = []
-
-# Adicionar
-if st.button("Adicionar perna"):
-    st.session_state.legs.append({
-        "type": option_type,
-        "side": side,
-        "strike": strike,
-        "premium": premium,
-        "premium_usd": premium_usd,
-        "quantity": quantity,
-        "enabled": True
-    })
-
-
-# =========================
-# LISTA DE PERNAS
-# =========================
-st.subheader("Pernas da estratégia")
-
-legs_to_remove = None
-
-for i, leg in enumerate(st.session_state.legs):
-
-    col1, col2, col3, col4, col5, col6 = st.columns([1,2,2,2,2,1])
-
-    leg["enabled"] = col1.checkbox(
-        "On",
-        value=leg.get("enabled", True),
-        key=f"enabled_{i}"
+    expiration = next(
+        exp["timestamp"] for exp in exp_list if exp["date"] == selected_date
     )
 
-    col2.write(f"{leg['side'].upper()} {leg['type'].upper()}")
-    col3.write(f"Strike {leg['strike']}")
-    col4.write(f"Qty {leg['quantity']}")
-    col5.write(
-        f"{leg['premium']:.4f} ETH  (~${leg.get('premium_usd', leg['premium']*spot_price):.2f})"
+    option_type = st.selectbox("Tipo", ["call", "put"])
+
+    filtered = [
+        inst for inst in instruments
+        if inst["expiration_timestamp"] == expiration
+        and inst["option_type"] == option_type
+    ]
+
+    strike_list = sorted([inst["strike"] for inst in filtered])
+
+    atm_strike = min(strike_list, key=lambda x: abs(x - spot_price))
+    atm_index = strike_list.index(atm_strike)
+
+    strike = st.selectbox(
+        "Strike (ATM sugerido)",
+        strike_list,
+        index=atm_index
     )
 
+    instrument = next(inst for inst in filtered if inst["strike"] == strike)
 
-    if col6.button("❌", key=f"remove_{i}"):
-        legs_to_remove = i
+    premium, iv = get_option_market(instrument["instrument_name"])
+    premium_usd = premium * spot_price
 
-if legs_to_remove is not None:
-    st.session_state.legs.pop(legs_to_remove)
+    st.write(f"IV: {iv*100:.1f}%")
+    st.write(f"Premium: {premium:.4f} ETH")
 
-# =========================
-# CUSTO TOTAL
-# =========================
-total_cost = 0
+    side = st.selectbox("Posição", ["buy", "sell"])
 
-for leg in st.session_state.legs:
-    if not leg["enabled"]:
-        continue
+    quantity = st.number_input(
+        "Quantidade (contratos)",
+        min_value=0.1,
+        value=0.1,
+        step=0.1,
+        format="%.1f"
+    )
 
-    cost = leg["premium"] * leg["quantity"] * spot_price
+    position_cost = premium * quantity * spot_price
 
-    if leg["side"] == "buy":
-        total_cost += cost
+    if side == "buy":
+        st.error(f"Débito: -${position_cost:,.2f}")
     else:
-        total_cost -= cost
+        st.success(f"Crédito: +${position_cost:,.2f}")
 
-st.metric("Custo total (USD)", f"${total_cost:,.2f}")
+    if st.button("Adicionar perna"):
+        st.session_state.legs.append({
+            "type": option_type,
+            "side": side,
+            "strike": strike,
+            "premium": premium,
+            "premium_usd": premium_usd,
+            "quantity": quantity,
+            "enabled": True
+        })
+
+
+# =========================
+# COLUNA DIREITA — CARTEIRA
+# =========================
+with right:
+
+    st.subheader("Pernas da estratégia")
+
+    legs_to_remove = None
+
+    for i, leg in enumerate(st.session_state.legs):
+
+        col1, col2, col3, col4, col5, col6 = st.columns([1,2,2,2,2,1])
+
+        leg["enabled"] = col1.checkbox(
+            "On",
+            value=leg.get("enabled", True),
+            key=f"enabled_{i}"
+        )
+
+        col2.write(f"{leg['side'].upper()} {leg['type'].upper()}")
+        col3.write(f"Strike {leg['strike']}")
+        col4.write(f"Qty {leg['quantity']}")
+        col5.write(
+            f"{leg['premium']:.4f} ETH (~${leg.get('premium_usd', leg['premium']*spot_price):.2f})"
+        )
+
+        if col6.button("❌", key=f"remove_{i}"):
+            legs_to_remove = i
+
+    if legs_to_remove is not None:
+        st.session_state.legs.pop(legs_to_remove)
+
+    # Custo total
+    total_cost = 0
+    for leg in st.session_state.legs:
+        if not leg["enabled"]:
+            continue
+
+        cost = leg["premium"] * leg["quantity"] * spot_price
+
+        if leg["side"] == "buy":
+            total_cost += cost
+        else:
+            total_cost -= cost
+
+    st.metric("Custo total (USD)", f"${total_cost:,.2f}")
+
+    simulate_button = st.button("Simular estratégia")
+
 
 
 # =========================
@@ -212,8 +200,9 @@ st.metric("Custo total (USD)", f"${total_cost:,.2f}")
 if "run_simulation" not in st.session_state:
     st.session_state.run_simulation = False
 
-if st.button("Simular estratégia"):
+if simulate_button:
     st.session_state.run_simulation = True
+
 
 if st.session_state.run_simulation:
 
@@ -323,6 +312,7 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot*0.5, spot*1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
