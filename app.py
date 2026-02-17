@@ -204,10 +204,18 @@ for leg in st.session_state.legs:
 
 st.metric("Custo total (USD)", f"${total_cost:,.2f}")
 
+
 # =========================
 # SIMULAÇÃO
 # =========================
+
+if "run_simulation" not in st.session_state:
+    st.session_state.run_simulation = False
+
 if st.button("Simular estratégia"):
+    st.session_state.run_simulation = True
+
+if st.session_state.run_simulation:
 
     active_legs = [leg for leg in st.session_state.legs if leg["enabled"]]
 
@@ -219,29 +227,27 @@ if st.button("Simular estratégia"):
     prices = np.linspace(spot * 0.7, spot * 1.3, 200)
     total_payoff = np.zeros_like(prices)
 
-    for leg in active_legs:   # ← ESTE FOR
+    for leg in active_legs:
 
-        # Payoff base (USD)
         if leg["type"] == "call":
             payoff = np.maximum(prices - leg["strike"], 0)
         else:
             payoff = np.maximum(leg["strike"] - prices, 0)
 
-        # Converter premium (ETH → USD)
         premium_usd = leg["premium"] * spot
 
-        # Aplicar lado
         if leg["side"] == "buy":
             payoff = payoff - premium_usd
         else:
             payoff = premium_usd - payoff
 
-        # Quantidade
         payoff = payoff * leg["quantity"]
 
         total_payoff += payoff
 
     payoff = total_payoff
+
+    # (segue métricas e gráfico normalmente)
 
 
     # =========================
@@ -306,6 +312,7 @@ if st.button("Simular estratégia"):
     fig.update_layout(template="plotly_dark", height=500)
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
