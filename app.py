@@ -231,7 +231,7 @@ if st.button("Simular estratégia"):
         else:
             payoff = leg["premium"] - payoff
 
-        payoff = payoff * leg["quantity"] * spot
+        payoff = payoff * leg["quantity"]
         total_payoff += payoff
 
     payoff = total_payoff
@@ -298,6 +298,7 @@ if st.button("Simular estratégia"):
     fig.update_layout(template="plotly_dark", height=500)
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
