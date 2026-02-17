@@ -224,7 +224,7 @@ if st.session_state.run_simulation:
         st.stop()
 
     spot = spot_price
-    prices = np.linspace(spot * 0.7, spot * 1.3, 200)
+    prices = np.linspace(0.01, spot * 2, 400)
     total_payoff = np.zeros_like(prices)
 
     for leg in active_legs:
@@ -312,6 +312,7 @@ if st.session_state.run_simulation:
     fig.update_layout(template="plotly_dark", height=500)
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
