@@ -245,7 +245,7 @@ for leg in active_legs:
 
     total_payoff += payoff
 
-payoff = total_payoff
+    payoff = total_payoff
 
 
     # (segue métricas e gráfico normalmente)
@@ -316,6 +316,7 @@ payoff = total_payoff
     fig.update_xaxes(range=[spot*0.5, spot*1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
