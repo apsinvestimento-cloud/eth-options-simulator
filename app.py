@@ -458,6 +458,51 @@ if st.session_state.run_simulation:
     )
     c5.metric("Prob. Lucro", f"{prob_profit:.1f}%")
 
+        # =========================
+    # GRÁFICO DE PAYOFF
+    # =========================
+    fig = go.Figure()
+
+    profit = np.maximum(payoff, 0)
+    loss = np.minimum(payoff, 0)
+
+    fig.add_trace(go.Scatter(
+        x=prices,
+        y=profit,
+        fill='tozeroy',
+        mode='lines',
+        name='Lucro',
+        line=dict(color='green'),
+        hovertemplate="Preço: $%{x:,.0f}<br>Lucro: $%{y:,.2f}<extra></extra>"
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=prices,
+        y=loss,
+        fill='tozeroy',
+        mode='lines',
+        name='Prejuízo',
+        line=dict(color='red'),
+        hovertemplate="Preço: $%{x:,.0f}<br>Prejuízo: $%{y:,.2f}<extra></extra>"
+    ))
+
+    fig.add_hline(y=0, line_dash="dot")
+    fig.add_vline(x=spot, line_dash="dash", annotation_text="Spot")
+
+    for be in breakeven_points:
+        fig.add_vline(x=be, line_dash="dot")
+
+    fig.update_layout(
+        template="plotly_dark",
+        height=500,
+        hoverlabel=dict(font_size=16)
+    )
+
+    fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
 
 # =========================
 # CARTEIRA
@@ -561,77 +606,4 @@ except Exception as e:
 
 
     
-       # =========================
-    # GRÁFICO
-    # =========================
-    fig = go.Figure()
-
-    profit = [max(p, 0) for p in payoff]
-    loss = [min(p, 0) for p in payoff]
-
-    fig.add_trace(go.Scatter(
-        x=prices,
-        y=profit,
-        fill='tozeroy',
-        mode='lines',
-        name='Lucro',
-        line=dict(color='green')
-    ))
-
-    fig.add_trace(go.Scatter(
-        x=prices,
-        y=loss,
-        fill='tozeroy',
-        mode='lines',
-        name='Prejuízo',
-        line=dict(color='red')
-    ))
-
-    fig.add_trace(go.Scatter(
-        x=prices,
-        y=profit,
-        fill='tozeroy',
-        mode='lines',
-        name='Lucro',
-        line=dict(color='green'),
-        hovertemplate=
-            "Preço: $%{x:,.0f}<br>"
-            "Lucro: $%{y:,.2f}"
-            "<extra></extra>"
-    ))
-
-
-    fig.add_hline(y=0, line_dash="dot")
-    fig.add_vline(x=spot, line_dash="dash", annotation_text="Spot")
-
-    for be in breakeven_points:
-        fig.add_vline(x=be, line_dash="dot")
-
-    # Layout + hover maior
-    fig.update_layout(
-        template="plotly_dark",
-        height=500,
-        hoverlabel=dict(
-            font_size=16,
-            font_family="Arial"
-        )
-    )
-
-    # Limita o zoom visual do eixo X
-    fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
-
-    st.plotly_chart(fig, use_container_width=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+     
