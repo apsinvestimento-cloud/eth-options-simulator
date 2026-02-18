@@ -216,7 +216,9 @@ with right:
 
     st.metric("Custo total (USD)", f"${total_cost:,.2f}")
 
-    # =========================
+  
+
+# =========================
 # SALVAR ESTRATÉGIA
 # =========================
 st.markdown("---")
@@ -406,6 +408,7 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
