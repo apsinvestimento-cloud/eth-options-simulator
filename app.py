@@ -326,15 +326,31 @@ if st.session_state.run_simulation:
 
     fig.add_trace(go.Scatter(
         x=prices,
-        y=payoff,
-        mode="lines",
-        name="Payoff",
-        line=dict(color="white", width=2),
+        y=profit,
+        fill='tozeroy',
+        mode='lines',
+        name='Lucro',
+        line=dict(color='green'),
         hovertemplate=
             "Preço: $%{x:,.0f}<br>"
-            "Resultado: $%{y:,.2f}"
+            "Lucro: $%{y:,.2f}"
             "<extra></extra>"
     ))
+
+    fig.add_trace(go.Scatter(
+        x=prices,
+        y=loss,
+        fill='tozeroy',
+        mode='lines',
+        name='Prejuízo',
+        line=dict(color='red'),
+        hovertemplate=
+            "Preço: $%{x:,.0f}<br>"
+            "Prejuízo: $%{y:,.2f}"
+            "<extra></extra>"
+    ))
+
+
 
 
     fig.add_hline(y=0, line_dash="dot")
@@ -357,4 +373,5 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
