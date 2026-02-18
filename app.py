@@ -28,11 +28,11 @@ Ideal para traders de cripto que querem **controlar risco antes de operar**.
 
     with col_login:
         if st.button("🔐 Fazer Login", use_container_width=True):
-            st.switch_page("1_Login.py")
+            st.switch_page("Login.py")
 
     with col_signup:
         if st.button("🚀 Criar Conta", use_container_width=True):
-            st.switch_page("1_Login.py")
+            st.switch_page("Login.py")
 
 
 # =========================
@@ -99,5 +99,6 @@ with col_center:
 st.markdown("---")
 
 st.caption("ETH Options Simulator • MVP • Dados de mercado via Deribit")
+
 
 
