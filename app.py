@@ -16,6 +16,16 @@ st.title("ETH Options Simulator")
 st_autorefresh(interval=30 * 1000, key="refresh")
 
 # =========================
+# SESSION STATE INIT
+# =========================
+if "legs" not in st.session_state:
+    st.session_state.legs = []
+
+if "run_simulation" not in st.session_state:
+    st.session_state.run_simulation = False
+
+
+# =========================
 # CACHE (importante para Cloud)
 # =========================
 @st.cache_data(ttl=30)
@@ -312,6 +322,7 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot*0.5, spot*1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
