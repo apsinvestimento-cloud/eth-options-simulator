@@ -249,47 +249,70 @@ with right:
 
     for i, leg in enumerate(st.session_state.legs):
 
-        col1, col2, col3, col4, col5, col6 = st.columns([1,2,2,2,2,1])
+        # Layout das colunas
+        col1, col2, col3, col4, col5, col6 = st.columns([1, 2, 2, 2, 2, 1])
 
+        # -------- Status --------
         leg["enabled"] = col1.checkbox(
             "On",
             value=leg.get("enabled", True),
             key=f"enabled_{i}"
         )
 
-        col2.write(f"{leg['side'].upper()} {leg['type'].upper()}")
-        col3.write(f"Strike {leg['strike']}")
-        col4.write(f"Qty {leg['quantity']}")
-        premium_eth = leg.get("premium", 0)
-premium_usd = leg.get("premium_usd")
+        # -------- Informações básicas --------
+        side = leg.get("side", "").upper()
+        opt_type = leg.get("type", "").upper()
+        strike = leg.get("strike", 0)
+        qty = leg.get("quantity", 0)
 
-# Compatibilidade com dados antigos
-if premium_usd is None:
-    premium_usd = leg.get("premium_entry_usd", 0)
+        col2.write(f"{side} {opt_type}")
+        col3.write(f"Strike {strike}")
+        col4.write(f"Qty {qty}")
 
-col5.write(
-    f"{premium_eth:.4f} ETH (~${premium_usd:.2f})"
-)
+        # -------- Premium (compatível com dados antigos) --------
+        premium_eth = leg.get("premium") or 0
+        premium_usd = (
+            leg.get("premium_usd")
+            or leg.get("premium_entry_usd")
+            or 0
+        )
 
+        col5.write(
+            f"{premium_eth:.4f} ETH (~${premium_usd:.2f})"
+        )
 
+        # -------- Remover perna --------
         if col6.button("❌", key=f"remove_{i}"):
             legs_to_remove = i
 
+    # Remove após o loop
     if legs_to_remove is not None:
         st.session_state.legs.pop(legs_to_remove)
 
-    # Custo total
+    # =========================
+    # CUSTO TOTAL (baseado no valor de entrada)
+    # =========================
     total_cost = 0
+
     for leg in st.session_state.legs:
-        if not leg["enabled"]:
+
+        if not leg.get("enabled", True):
             continue
 
-        cost = leg["premium"] * leg["quantity"] * spot_price
+        premium_usd = (
+            leg.get("premium_usd")
+            or leg.get("premium_entry_usd")
+            or 0
+        )
 
-        if leg["side"] == "buy":
-            total_cost += cost
+        qty = leg.get("quantity", 0)
+
+        cost = premium_usd * qty
+
+        if leg.get("side") == "buy":
+            total_cost -= cost   # débito
         else:
-            total_cost -= cost
+            total_cost += cost   # crédito
 
     st.metric("Custo total (USD)", f"${total_cost:,.2f}")
 
@@ -599,6 +622,7 @@ except Exception as e:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
