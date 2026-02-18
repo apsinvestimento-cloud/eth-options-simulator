@@ -216,6 +216,37 @@ with right:
 
     st.metric("Custo total (USD)", f"${total_cost:,.2f}")
 
+    # =========================
+# SALVAR ESTRATÉGIA
+# =========================
+st.markdown("---")
+st.subheader("Salvar estratégia")
+
+strategy_name = st.text_input(
+    "Nome da estratégia",
+    placeholder="Ex: Short Put ETH 1800"
+)
+
+if st.button("Salvar estratégia"):
+
+    active_legs = [leg for leg in st.session_state.legs if leg["enabled"]]
+
+    if not active_legs:
+        st.warning("Nenhuma perna ativa para salvar")
+    elif strategy_name.strip() == "":
+        st.warning("Digite um nome para a estratégia")
+    else:
+        try:
+            save_strategy(
+                name=strategy_name,
+                spot_entry=spot_price,
+                legs=active_legs
+            )
+            st.success("Estratégia salva com sucesso!")
+        except Exception as e:
+            st.error(f"Erro ao salvar: {e}")
+
+
     simulate_button = st.button("Simular estratégia")
 
 
@@ -375,6 +406,7 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
