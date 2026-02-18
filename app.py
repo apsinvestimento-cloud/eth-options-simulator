@@ -229,13 +229,16 @@ with left:
     else:
         st.success(f"Crédito: +${position_cost:,.2f}")
 
+    # =========================
+    # ADICIONAR PERNA
+    # =========================
     if st.button("Adicionar perna"):
-        st.session_state.legs.append({
+        new_leg = {
             "type": option_type,
             "side": side,
             "strike": strike,
-            "quantity": quantity,
-            "premium": premium,
+            "quantity": float(quantity),
+            "premium": float(premium),
             "premium_usd": premium * spot_price,
             "premium_entry_usd": premium * spot_price,
             "iv_entry": iv,
@@ -243,7 +246,10 @@ with left:
             "expiration_timestamp": expiration,
             "expiration_date": selected_date,
             "enabled": True
-    })
+        }
+
+    st.session_state.legs.append(new_leg)
+
 
 
 
@@ -613,7 +619,7 @@ try:
                 st.caption(f"IV média na entrada: {avg_iv*100:.1f}%")
                 st.caption(f"Criada em: {strat['created_at']}")
 
-               st.markdown("**Pernas:**")
+                st.markdown("**Pernas:**")
 
                 for leg in legs:
 
@@ -674,6 +680,7 @@ except Exception as e:
 
     
      
+
 
 
 
