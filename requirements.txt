@@ -3,5 +3,8 @@ requests
 numpy
 plotly
 streamlit-autorefresh
+supabase
+
+
 
 
