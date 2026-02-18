@@ -322,8 +322,8 @@ if st.session_state.run_simulation:
     hoverlabel=dict(
         font_size=16,
         font_family="Arial"
+        )
     )
-)
 
 
 
@@ -331,6 +331,7 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot*0.5, spot*1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
