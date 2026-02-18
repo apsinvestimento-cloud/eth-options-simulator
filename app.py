@@ -25,6 +25,62 @@ def save_strategy(name, spot_entry, legs):
     }
     supabase.table("strategies").insert(data).execute()
 
+# =========================
+# CÁLCULOS DE CARTEIRA
+# =========================
+
+def calculate_entry_value(legs):
+    total = 0
+
+    for leg in legs:
+        premium = leg["premium_entry_usd"] * leg["quantity"]
+
+        if leg["side"] == "buy":
+            total -= premium
+        else:
+            total += premium
+
+    return total
+
+
+def calculate_strategy_values(legs, spot_now):
+
+    total_pl = 0
+    current_value = 0
+
+    for leg in legs:
+
+        strike = leg["strike"]
+        qty = leg["quantity"]
+        entry = leg["premium_entry_usd"]
+
+        if leg["type"] == "call":
+            intrinsic = max(spot_now - strike, 0)
+        else:
+            intrinsic = max(strike - spot_now, 0)
+
+        # valor atual da perna
+        value_now = intrinsic * qty
+        current_value += value_now
+
+        # P/L
+        if leg["side"] == "buy":
+            pl = (intrinsic - entry) * qty
+        else:
+            pl = (entry - intrinsic) * qty
+
+        total_pl += pl
+
+    return current_value, total_pl
+
+
+def average_iv(legs):
+    ivs = [leg.get("iv_entry", 0) for leg in legs]
+    if not ivs:
+        return 0
+    return sum(ivs) / len(ivs)
+
+
 def load_strategies():
     response = supabase.table("strategies") \
         .select("*") \
@@ -171,11 +227,12 @@ with left:
             "type": option_type,
             "side": side,
             "strike": strike,
-            "premium": premium,
-            "premium_usd": premium_usd,
             "quantity": quantity,
+            "premium_entry_usd": premium * spot_price,
+            "iv_entry": iv,
             "enabled": True
-        })
+    })
+
 
 
 # =========================
@@ -368,12 +425,82 @@ try:
     else:
         for strat in strategies:
 
-            with st.expander(
-                f"{strat['name']} | Entrada: ${strat['spot_entry']:,.2f}"
-            ):
+            legs = strat["legs"]
 
-                legs = strat["legs"]
+            # =========================
+            # CÁLCULOS
+            # =========================
+            entry_value = 0
+            current_value = 0
+            total_pl = 0
+            iv_list = []
+            strikes = []
 
+            for leg in legs:
+
+                strike = leg["strike"]
+                qty = leg["quantity"]
+                strikes.append(strike)
+
+                # Premium de entrada (USD)
+                premium_entry = leg.get("premium_entry_usd", 0)
+
+                # IV na entrada
+                iv_list.append(leg.get("iv_entry", 0))
+
+                # Crédito / Débito na entrada
+                if leg["side"] == "buy":
+                    entry_value -= premium_entry * qty
+                else:
+                    entry_value += premium_entry * qty
+
+                # Valor atual (intrínseco)
+                if leg["type"] == "call":
+                    intrinsic = max(spot_price - strike, 0)
+                else:
+                    intrinsic = max(strike - spot_price, 0)
+
+                current_value += intrinsic * qty
+
+                # P/L
+                if leg["side"] == "buy":
+                    pl_leg = (intrinsic - premium_entry) * qty
+                else:
+                    pl_leg = (premium_entry - intrinsic) * qty
+
+                total_pl += pl_leg
+
+            avg_iv = sum(iv_list) / len(iv_list) if iv_list else 0
+
+            # Strikes únicos (ordenados)
+            strikes_text = ", ".join([str(int(s)) for s in sorted(set(strikes))])
+
+            # =========================
+            # EXIBIÇÃO
+            # =========================
+            with st.expander(f"{strat['name']} | Strikes: {strikes_text}"):
+
+                col1, col2, col3 = st.columns(3)
+
+                # Entrada
+                if entry_value >= 0:
+                    col1.success(f"Crédito entrada: +${entry_value:,.2f}")
+                else:
+                    col1.error(f"Débito entrada: ${entry_value:,.2f}")
+
+                # Atual
+                col2.metric("Valor atual", f"${current_value:,.2f}")
+
+                # P/L
+                if total_pl >= 0:
+                    col3.success(f"P/L: +${total_pl:,.2f}")
+                else:
+                    col3.error(f"P/L: ${total_pl:,.2f}")
+
+                st.caption(f"IV média na entrada: {avg_iv*100:.1f}%")
+                st.caption(f"Criada em: {strat['created_at']}")
+
+                st.markdown("**Pernas:**")
                 for leg in legs:
                     st.write(
                         f"{leg['side'].upper()} {leg['type'].upper()} | "
@@ -381,10 +508,9 @@ try:
                         f"Qty {leg['quantity']}"
                     )
 
-                st.caption(f"Criada em: {strat['created_at']}")
-
 except Exception as e:
     st.error(f"Erro ao carregar carteira: {e}")
+
 
     
        # =========================
@@ -447,6 +573,7 @@ except Exception as e:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
