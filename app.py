@@ -248,7 +248,7 @@ with left:
             "enabled": True
         }
 
-    st.session_state.legs.append(new_leg)
+        st.session_state.legs.append(new_leg)
 
 
 
@@ -680,6 +680,7 @@ except Exception as e:
 
     
      
+
 
 
 
