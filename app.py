@@ -363,69 +363,62 @@ if st.button("Simular estratégia"):
 
 if st.session_state.run_simulation:
 
-    # Pernas ativas
-    active_legs = [leg for leg in st.session_state.legs if leg["enabled"]]
+    # Pernas ativas (seguro para dados antigos)
+    active_legs = [leg for leg in st.session_state.legs if leg.get("enabled", True)]
 
     if not active_legs:
         st.warning("Nenhuma perna ativa")
         st.stop()
 
-   # =========================
-# CÁLCULO DO PAYOFF (seguro e compatível)
-# =========================
+    # IV média
+    iv_list = [leg.get("iv_entry", 0) for leg in active_legs]
+    iv = sum(iv_list) / len(iv_list) if iv_list else 0.8
 
-spot = float(spot_price)
-prices = np.linspace(0.01, spot * 2, 400)
-total_payoff = np.zeros_like(prices, dtype=float)
+    # =========================
+    # CÁLCULO DO PAYOFF
+    # =========================
+    spot = float(spot_price)
+    prices = np.linspace(0.01, spot * 2, 400)
+    total_payoff = np.zeros_like(prices, dtype=float)
 
-for leg in active_legs:
+    for leg in active_legs:
 
-    # -------- Normalização da perna --------
-    leg_type = leg.get("type")
-    side = leg.get("side")
-    strike = float(leg.get("strike", 0))
-    qty = float(leg.get("quantity", 0))
+        # Normalização
+        leg_type = leg.get("type")
+        side = leg.get("side")
+        strike = float(leg.get("strike", 0))
+        qty = float(leg.get("quantity", 0))
 
-    # Premium em USD (compatível com dados antigos)
-    premium_usd = (
-        leg.get("premium_usd")
-        or leg.get("premium_entry_usd")
-        or 0
-    )
-    premium_usd = float(premium_usd)
+        premium_usd = (
+            leg.get("premium_usd")
+            or leg.get("premium_entry_usd")
+            or 0
+        )
+        premium_usd = float(premium_usd)
 
-    # -------- Valor intrínseco --------
-    if leg_type == "call":
-        intrinsic = np.maximum(prices - strike, 0)
-    else:
-        intrinsic = np.maximum(strike - prices, 0)
+        # Intrínseco
+        if leg_type == "call":
+            intrinsic = np.maximum(prices - strike, 0)
+        else:
+            intrinsic = np.maximum(strike - prices, 0)
 
-    # -------- Payoff da perna --------
-    if side == "buy":
-        payoff_leg = intrinsic - premium_usd
-    else:
-        payoff_leg = premium_usd - intrinsic
+        # Payoff
+        if side == "buy":
+            payoff_leg = intrinsic - premium_usd
+        else:
+            payoff_leg = premium_usd - intrinsic
 
-    # Ajusta pela quantidade
-    payoff_leg = payoff_leg * qty
+        total_payoff += payoff_leg * qty
 
-    # Soma ao payoff total
-    total_payoff += payoff_leg
-
-# Resultado final
-payoff = total_payoff
-
-
-    # (segue métricas e gráfico normalmente)
-
+    payoff = total_payoff
 
     # =========================
     # MÉTRICAS
     # =========================
-    max_profit = max(payoff)
-    max_loss = min(payoff)
+    max_profit = float(np.max(payoff))
+    max_loss = float(np.min(payoff))
 
-    current_index = min(range(len(prices)), key=lambda i: abs(prices[i] - spot))
+    current_index = np.abs(prices - spot).argmin()
     current_payoff = payoff[current_index]
 
     breakeven_points = []
@@ -433,7 +426,9 @@ payoff = total_payoff
         if payoff[i-1] * payoff[i] < 0:
             breakeven_points.append(prices[i])
 
-    # Probabilidade
+    # =========================
+    # PROBABILIDADE
+    # =========================
     now = time.time()
     time_to_expiry = max((expiration / 1000 - now) / (365 * 24 * 3600), 0.0001)
     std = spot * iv * np.sqrt(time_to_expiry)
@@ -442,10 +437,10 @@ payoff = total_payoff
         return 0.5 * (1 + math.erf((x - mu) / (sigma * math.sqrt(2))))
 
     prob_profit = 0
-    for i in range(len(prices)-1):
-        if payoff[i] > 0 or payoff[i+1] > 0:
+    for i in range(len(prices) - 1):
+        if payoff[i] > 0 or payoff[i + 1] > 0:
             p1 = norm_cdf(prices[i], spot, std)
-            p2 = norm_cdf(prices[i+1], spot, std)
+            p2 = norm_cdf(prices[i + 1], spot, std)
             prob_profit += max(p2 - p1, 0)
 
     prob_profit *= 100
@@ -457,8 +452,12 @@ payoff = total_payoff
     c1.metric("P/L Atual", f"${current_payoff:,.2f}")
     c2.metric("Lucro Máx", f"${max_profit:,.2f}")
     c3.metric("Perda Máx", f"${max_loss:,.2f}")
-    c4.metric("Break-even", ", ".join([f"{be:.0f}" for be in breakeven_points]) if breakeven_points else "-")
+    c4.metric(
+        "Break-even",
+        ", ".join([f"{be:.0f}" for be in breakeven_points]) if breakeven_points else "-"
+    )
     c5.metric("Prob. Lucro", f"{prob_profit:.1f}%")
+
 
 # =========================
 # CARTEIRA
@@ -622,6 +621,7 @@ except Exception as e:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
