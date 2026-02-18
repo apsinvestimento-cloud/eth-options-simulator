@@ -1,4 +1,8 @@
 import streamlit as st
+from utils.auth import require_login
+
+require_login()
+
 
 st.set_page_config(page_title="Carteira", layout="wide")
 
