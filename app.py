@@ -239,6 +239,7 @@ with left:
             "premium_usd": premium * spot_price,    # USD
             "premium_entry_usd": premium * spot_price,
             "iv_entry": iv,
+            "instrument_name": instrument["instrument_name"],
             "enabled": True
     })
 
@@ -554,19 +555,29 @@ try:
                 else:
                     entry_value += premium_entry * qty
 
-                # Valor atual (intrínseco)
-                if leg["type"] == "call":
-                    intrinsic = max(spot_price - strike, 0)
-                else:
-                    intrinsic = max(strike - spot_price, 0)
+                # Valor atual de mercado
+                instrument_name = leg.get("instrument_name")
 
-                current_value += intrinsic * qty
+                if instrument_name:
+                    premium_now, iv_now = get_option_market(instrument_name)
+                    value_now = premium_now * spot_price * qty
+                else:
+                    # fallback para dados antigos
+                    if leg["type"] == "call":
+                        intrinsic = max(spot_price - strike, 0)
+                    else:
+                        intrinsic = max(strike - spot_price, 0)
+                    value_now = intrinsic * qty
+
+                current_value += value_now
+
 
                 # P/L
                 if leg["side"] == "buy":
-                    pl_leg = (intrinsic - premium_entry) * qty
+                    pl_leg = value_now - (premium_entry * qty)
                 else:
-                    pl_leg = (premium_entry - intrinsic) * qty
+                    pl_leg = (premium_entry * qty) - value_now
+
 
                 total_pl += pl_leg
 
@@ -622,4 +633,5 @@ except Exception as e:
 
     
      
+
 
