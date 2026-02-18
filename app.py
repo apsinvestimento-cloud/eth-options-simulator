@@ -298,7 +298,7 @@ if st.session_state.run_simulation:
     c4.metric("Break-even", ", ".join([f"{be:.0f}" for be in breakeven_points]) if breakeven_points else "-")
     c5.metric("Prob. Lucro", f"{prob_profit:.1f}%")
 
-    # =========================
+       # =========================
     # GRÁFICO
     # =========================
     fig = go.Figure()
@@ -306,9 +306,31 @@ if st.session_state.run_simulation:
     profit = [max(p, 0) for p in payoff]
     loss = [min(p, 0) for p in payoff]
 
-    fig.add_trace(go.Scatter(x=prices, y=profit, fill='tozeroy', mode='lines', name='Lucro', line=dict(color='green')))
-    fig.add_trace(go.Scatter(x=prices, y=loss, fill='tozeroy', mode='lines', name='Prejuízo', line=dict(color='red')))
-    fig.add_trace(go.Scatter(x=prices, y=payoff, mode="lines", name="Payoff", line=dict(color="white", width=2)))
+    fig.add_trace(go.Scatter(
+        x=prices,
+        y=profit,
+        fill='tozeroy',
+        mode='lines',
+        name='Lucro',
+        line=dict(color='green')
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=prices,
+        y=loss,
+        fill='tozeroy',
+        mode='lines',
+        name='Prejuízo',
+        line=dict(color='red')
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=prices,
+        y=payoff,
+        mode="lines",
+        name="Payoff",
+        line=dict(color="white", width=2)
+    ))
 
     fig.add_hline(y=0, line_dash="dot")
     fig.add_vline(x=spot, line_dash="dash", annotation_text="Spot")
@@ -316,38 +338,17 @@ if st.session_state.run_simulation:
     for be in breakeven_points:
         fig.add_vline(x=be, line_dash="dot")
 
-   fig.update_layout(
-    template="plotly_dark",
-    height=500,
-    hoverlabel=dict(
-        font_size=16,
-        font_family="Arial"
+    # Layout + hover maior
+    fig.update_layout(
+        template="plotly_dark",
+        height=500,
+        hoverlabel=dict(
+            font_size=16,
+            font_family="Arial"
         )
     )
 
-
-
-    # Limita o zoom visual do eixo X (apenas visual)
-    fig.update_xaxes(range=[spot*0.5, spot*1.5])
+    # Limita o zoom visual do eixo X
+    fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
