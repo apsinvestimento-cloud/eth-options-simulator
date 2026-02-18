@@ -25,6 +25,13 @@ def save_strategy(name, spot_entry, legs):
     }
     supabase.table("strategies").insert(data).execute()
 
+def delete_strategy(strategy_id):
+    supabase.table("strategies") \
+        .delete() \
+        .eq("id", strategy_id) \
+        .execute()
+
+
 # =========================
 # CÁLCULOS DE CARTEIRA
 # =========================
@@ -573,8 +580,8 @@ try:
             # =========================
             with st.expander(f"{strat['name']} | Strikes: {strikes_text}"):
 
-                col1, col2, col3 = st.columns(3)
-
+                col1, col2, col3, col4 = st.columns([1,1,1,0.7])
+              
                 # Entrada
                 if entry_value >= 0:
                     col1.success(f"Crédito entrada: +${entry_value:,.2f}")
@@ -600,6 +607,14 @@ try:
                         f"Strike {leg['strike']} | "
                         f"Qty {leg['quantity']}"
                     )
+                  # Botão excluir
+                if col4.button("🗑", key=f"delete_{strat['id']}"):
+                    try:
+                        delete_strategy(strat["id"])
+                        st.success("Estratégia excluída!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Erro ao excluir: {e}")
 
 except Exception as e:
     st.error(f"Erro ao carregar carteira: {e}")
@@ -607,3 +622,4 @@ except Exception as e:
 
     
      
+
