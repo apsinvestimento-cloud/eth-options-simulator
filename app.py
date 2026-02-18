@@ -230,19 +230,19 @@ with left:
         st.success(f"Crédito: +${position_cost:,.2f}")
 
     if st.button("Adicionar perna"):
-    st.session_state.legs.append({
-        "type": option_type,
-        "side": side,
-        "strike": strike,
-        "quantity": quantity,
-        "premium": premium,
-        "premium_usd": premium * spot_price,
-        "premium_entry_usd": premium * spot_price,
-        "iv_entry": iv,
-        "instrument_name": instrument["instrument_name"],
-        "expiration_timestamp": expiration,
-        "expiration_date": selected_date,
-        "enabled": True
+        st.session_state.legs.append({
+            "type": option_type,
+            "side": side,
+            "strike": strike,
+            "quantity": quantity,
+            "premium": premium,
+            "premium_usd": premium * spot_price,
+            "premium_entry_usd": premium * spot_price,
+            "iv_entry": iv,
+            "instrument_name": instrument["instrument_name"],
+            "expiration_timestamp": expiration,
+            "expiration_date": selected_date,
+            "enabled": True
     })
 
 
@@ -671,6 +671,7 @@ except Exception as e:
 
     
      
+
 
 
 
