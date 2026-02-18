@@ -524,6 +524,7 @@ if st.session_state.run_simulation:
 # CARTEIRA
 # =========================
 st.markdown("---")
+st.subheader("📊 Carteira de Estratégias")
 
 col_title, col_pl, col_real = st.columns([2,1,1])
 
@@ -756,6 +757,7 @@ except Exception as e:
 
     
      
+
 
 
 
