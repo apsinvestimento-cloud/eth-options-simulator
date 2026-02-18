@@ -99,3 +99,4 @@ with col_center:
 st.markdown("---")
 
 st.caption("ETH Options Simulator • MVP • Dados de mercado via Deribit")
+
