@@ -524,49 +524,31 @@ if st.session_state.run_simulation:
 # CARTEIRA
 # =========================
 st.markdown("---")
-st.subheader("📊 Carteira de Estratégias")
-
-col_title, col_pl, col_real = st.columns([2,1,1])
-
-col_title.subheader("📊 Carteira de Estratégias")
-
-# P/L Atual
-if portfolio_pl_total >= 0:
-    col_pl.success(f"P/L Atual: +${portfolio_pl_total:,.2f}")
-else:
-    col_pl.error(f"P/L Atual: ${portfolio_pl_total:,.2f}")
-
-# P/L Realizado
-if portfolio_realized_pl >= 0:
-    col_real.info(f"Realizado: +${portfolio_realized_pl:,.2f}")
-else:
-    col_real.info(f"Realizado: ${portfolio_realized_pl:,.2f}")
-
 
 try:
     strategies = load_strategies()
 
+    # =========================
+    # TOTAIS DA CARTEIRA
+    # =========================
+    portfolio_entry_total = 0
+    portfolio_current_total = 0
+    portfolio_pl_total = 0
+    portfolio_realized_pl = 0  # ainda não implementado (para futuro)
+
     if not strategies:
+        st.subheader("📊 Carteira de Estratégias")
         st.info("Nenhuma estratégia salva.")
     else:
 
         # =========================
-        # TOTAIS DA CARTEIRA
+        # PRIMEIRO: CALCULAR TUDO
         # =========================
-        portfolio_entry_total = 0
-        portfolio_current_total = 0
-        portfolio_pl_total = 0
-        
+        processed_strategies = []
+
         for strat in strategies:
 
             legs = strat["legs"]
-
-            
-
-
-            # =========================
-            # CÁLCULOS
-            # =========================
             entry_value = 0
             current_value = 0
             total_pl = 0
@@ -576,13 +558,10 @@ try:
             for leg in legs:
 
                 strike = leg["strike"]
-                qty = leg["quantity"]
+                qty = float(leg["quantity"])
                 strikes.append(strike)
 
-                # Premium de entrada (USD)
-                premium_entry = leg.get("premium_entry_usd", 0)
-
-                # IV na entrada
+                premium_entry = float(leg.get("premium_entry_usd", 0))
                 iv_list.append(leg.get("iv_entry", 0))
 
                 # Crédito / Débito na entrada
@@ -597,10 +576,9 @@ try:
                 instrument_name = leg.get("instrument_name")
 
                 if instrument_name:
-                    premium_now, iv_now = get_option_market(instrument_name)
+                    premium_now, _ = get_option_market(instrument_name)
                     value_now = premium_now * spot_price * qty
                 else:
-                    # fallback para dados antigos
                     if leg["type"] == "call":
                         intrinsic = max(spot_price - strike, 0)
                     else:
@@ -619,30 +597,52 @@ try:
 
                 total_pl += pl_leg
 
-
-            # =========================
-            # SOMAR AO TOTAL DA CARTEIRA
-            # =========================
+            # Somar aos totais da carteira
             portfolio_entry_total += entry_value
             portfolio_current_total += current_value
             portfolio_pl_total += total_pl
 
+            processed_strategies.append({
+                "strat": strat,
+                "entry_value": entry_value,
+                "current_value": current_value,
+                "total_pl": total_pl,
+                "avg_iv": sum(iv_list) / len(iv_list) if iv_list else 0,
+                "strikes_text": ", ".join([str(int(s)) for s in sorted(set(strikes))])
+            })
 
-            # =========================
-            # MÉTRICAS AUXILIARES
-            # =========================
-            avg_iv = sum(iv_list) / len(iv_list) if iv_list else 0
+        # =========================
+        # AGORA MOSTRAR O TOPO
+        # =========================
+        col_title, col_pl, col_real = st.columns([2, 1, 1])
 
-            # Strikes únicos (ordenados)
-            strikes_text = ", ".join([str(int(s)) for s in sorted(set(strikes))])
+        col_title.subheader("📊 Carteira de Estratégias")
 
+        # P/L Atual (não realizado)
+        if portfolio_pl_total >= 0:
+            col_pl.success(f"P/L Atual: +${portfolio_pl_total:,.2f}")
+        else:
+            col_pl.error(f"P/L Atual: ${portfolio_pl_total:,.2f}")
 
-            # =========================
-            # EXIBIÇÃO
-            # =========================
+        # P/L Realizado (futuro)
+        col_real.info(f"Realizado: ${portfolio_realized_pl:,.2f}")
+
+        # =========================
+        # EXIBIR CADA ESTRATÉGIA
+        # =========================
+        for data in processed_strategies:
+
+            strat = data["strat"]
+            entry_value = data["entry_value"]
+            current_value = data["current_value"]
+            total_pl = data["total_pl"]
+            avg_iv = data["avg_iv"]
+            strikes_text = data["strikes_text"]
+            legs = strat["legs"]
+
             with st.expander(f"{strat['name']} | Strikes: {strikes_text}"):
 
-                col1, col2, col3, col4 = st.columns([1, 1, 1, 0.7])
+                col1, col2, col3 = st.columns(3)
 
                 # Entrada
                 if entry_value >= 0:
@@ -653,7 +653,7 @@ try:
                 # Atual
                 col2.metric("Valor atual", f"${current_value:,.2f}")
 
-                # P/L
+                # P/L por estratégia
                 if total_pl >= 0:
                     col3.success(f"P/L: +${total_pl:,.2f}")
                 else:
@@ -661,8 +661,8 @@ try:
 
                 st.caption(f"IV média na entrada: {avg_iv*100:.1f}%")
 
+                # Data formatada
                 created_at_raw = strat.get("created_at")
-
                 try:
                     created_at_dt = datetime.fromisoformat(created_at_raw)
                     created_at_formatted = created_at_dt.strftime("%d/%m/%Y às %H:%M")
@@ -678,45 +678,18 @@ try:
                     side = leg.get("side", "").upper()
                     opt_type = leg.get("type", "").upper()
                     strike = leg.get("strike", 0)
-                    qty = leg.get("quantity", 0)
+                    qty = float(leg.get("quantity", 0))
 
+                    exp_date = leg.get("expiration_date", "-")
 
-                    # =========================
-                    # VENCIMENTO (robusto)
-                    # =========================
-                    exp_date = leg.get("expiration_date")
-                
-                    # Se não existir (estratégias antigas), tenta extrair do instrument_name
-                    if not exp_date:
-                        instrument_name = leg.get("instrument_name")
-                        if instrument_name:
-                            try:
-                                # Formato Deribit: ETH-30MAR24-2000-P
-                                parts = instrument_name.split("-")
-                                if len(parts) >= 2:
-                                    exp_raw = parts[1]
-                                    exp_date = datetime.strptime(exp_raw, "%d%b%y").strftime("%Y-%m-%d")
-                            except:
-                                exp_date = "-"
-                        else:
-                            exp_date = "-"
-
-                    # =========================
-                    # VALOR DE ENTRADA
-                    # =========================
                     premium_usd = (
                         leg.get("premium_usd")
                         or leg.get("premium_entry_usd")
                         or 0
                     )
 
-                    premium_usd = float(premium_usd)
-                    qty = float(qty)
-                    total_entry = premium_usd * qty
+                    total_entry = float(premium_usd) * qty
 
-                    # =========================
-                    # TEXTO
-                    # =========================
                     text = (
                         f"{side} {opt_type} | "
                         f"Strike {strike} | "
@@ -724,51 +697,10 @@ try:
                         f"Exp: {exp_date}"
                     )
 
-                    # =========================
-                    # EXIBIÇÃO
-                    # =========================
                     if leg.get("side") == "buy":
                         st.error(text + f" | Débito: -${total_entry:,.2f}")
                     else:
                         st.success(text + f" | Crédito: +${total_entry:,.2f}")
 
-
-                    # =========================
-                    # RESUMO GERAL DA CARTEIRA
-                    # =========================
-                    st.markdown("## 📈 Resumo Geral")
-
-                    c1, c2, c3 = st.columns(3)
-
-                    c1.metric("Capital Inicial", f"${portfolio_entry_total:,.2f}")
-                    c2.metric("Valor Atual", f"${portfolio_current_total:,.2f}")
-
-                    if portfolio_pl_total >= 0:
-                        c3.success(f"P/L Total: +${portfolio_pl_total:,.2f}")
-                    else:
-                        c3.error(f"P/L Total: ${portfolio_pl_total:,.2f}")
-
-
-
-
 except Exception as e:
     st.error(f"Erro ao carregar carteira: {e}")
-
-
-    
-     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
