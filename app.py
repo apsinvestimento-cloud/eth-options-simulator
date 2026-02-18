@@ -230,17 +230,19 @@ with left:
         st.success(f"Crédito: +${position_cost:,.2f}")
 
     if st.button("Adicionar perna"):
-        st.session_state.legs.append({
-            "type": option_type,
-            "side": side,
-            "strike": strike,
-            "quantity": quantity,
-            "premium": premium,                     # ETH
-            "premium_usd": premium * spot_price,    # USD
-            "premium_entry_usd": premium * spot_price,
-            "iv_entry": iv,
-            "instrument_name": instrument["instrument_name"],
-            "enabled": True
+    st.session_state.legs.append({
+        "type": option_type,
+        "side": side,
+        "strike": strike,
+        "quantity": quantity,
+        "premium": premium,
+        "premium_usd": premium * spot_price,
+        "premium_entry_usd": premium * spot_price,
+        "iv_entry": iv,
+        "instrument_name": instrument["instrument_name"],
+        "expiration_timestamp": expiration,
+        "expiration_date": selected_date,
+        "enabled": True
     })
 
 
@@ -611,21 +613,57 @@ try:
                 st.caption(f"IV média na entrada: {avg_iv*100:.1f}%")
                 st.caption(f"Criada em: {strat['created_at']}")
 
-                st.markdown("**Pernas:**")
+               st.markdown("**Pernas:**")
+
                 for leg in legs:
-                    st.write(
-                        f"{leg['side'].upper()} {leg['type'].upper()} | "
-                        f"Strike {leg['strike']} | "
-                        f"Qty {leg['quantity']}"
+
+                    side = leg.get("side", "").upper()
+                    opt_type = leg.get("type", "").upper()
+                    strike = leg.get("strike", 0)
+                    qty = leg.get("quantity", 0)
+
+                    # =========================
+                    # VENCIMENTO (robusto)
+                    # =========================
+                    exp_date = leg.get("expiration_date")
+                
+                    # Se não existir (estratégias antigas), tenta extrair do instrument_name
+                    if not exp_date:
+                        instrument_name = leg.get("instrument_name")
+                        if instrument_name:
+                            try:
+                                # Formato Deribit: ETH-30MAR24-2000-P
+                                parts = instrument_name.split("-")
+                                if len(parts) >= 2:
+                                    exp_raw = parts[1]
+                                    exp_date = datetime.strptime(exp_raw, "%d%b%y").strftime("%Y-%m-%d")
+                            except:
+                                exp_date = "-"
+                        else:
+                            exp_date = "-"
+
+                    # =========================
+                    # VALOR DE ENTRADA
+                    # =========================
+                    premium_usd = (
+                        leg.get("premium_usd")
+                        or leg.get("premium_entry_usd")
+                        or 0
                     )
-                  # Botão excluir
-                if col4.button("🗑", key=f"delete_{strat['id']}"):
-                    try:
-                        delete_strategy(strat["id"])
-                        st.success("Estratégia excluída!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Erro ao excluir: {e}")
+
+                    premium_usd = float(premium_usd)
+                    qty = float(qty)
+                    total_entry = premium_usd * qty
+
+                    # =========================
+                    # TEXTO
+                    # =========================
+                    text = (
+                        f"{side} {opt_type} | "
+                        f"Strike {strike} | "
+                        f"Qty {
+
+
 
 except Exception as e:
     st.error(f"Erro ao carregar carteira: {e}")
@@ -633,5 +671,6 @@ except Exception as e:
 
     
      
+
 
 
