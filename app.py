@@ -524,7 +524,23 @@ if st.session_state.run_simulation:
 # CARTEIRA
 # =========================
 st.markdown("---")
-st.subheader("📊 Carteira de Estratégias")
+
+col_title, col_pl, col_real = st.columns([2,1,1])
+
+col_title.subheader("📊 Carteira de Estratégias")
+
+# P/L Atual
+if portfolio_pl_total >= 0:
+    col_pl.success(f"P/L Atual: +${portfolio_pl_total:,.2f}")
+else:
+    col_pl.error(f"P/L Atual: ${portfolio_pl_total:,.2f}")
+
+# P/L Realizado
+if portfolio_realized_pl >= 0:
+    col_real.info(f"Realizado: +${portfolio_realized_pl:,.2f}")
+else:
+    col_real.info(f"Realizado: ${portfolio_realized_pl:,.2f}")
+
 
 try:
     strategies = load_strategies()
@@ -740,6 +756,7 @@ except Exception as e:
 
     
      
+
 
 
 
