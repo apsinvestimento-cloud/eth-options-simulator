@@ -12,8 +12,8 @@ from supabase import create_client
 # SUPABASE CONFIG
 # =========================
 
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+SUPABASE_URL = st.secrets[https://ydusqixrnhknxbzzcubz.supabase.co]
+SUPABASE_KEY = st.secrets[sb_publishable_tgygnCtVje7KMWmTfvHC6w_Jk4dsAtb]
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -375,6 +375,7 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
