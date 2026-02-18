@@ -8,6 +8,11 @@ from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 from supabase import create_client
 
+from utils.auth import require_login
+
+require_login()
+
+
 # =========================
 # SUPABASE CONFIG
 # =========================
@@ -704,3 +709,4 @@ try:
 
 except Exception as e:
     st.error(f"Erro ao carregar carteira: {e}")
+
