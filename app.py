@@ -661,7 +661,10 @@ try:
                     text = (
                         f"{side} {opt_type} | "
                         f"Strike {strike} | "
-                        f"Qty {
+                        f"Qty {qty} | "
+                        f"Exp: {exp_date}"
+                    )
+
 
 
 
@@ -671,6 +674,7 @@ except Exception as e:
 
     
      
+
 
 
 
