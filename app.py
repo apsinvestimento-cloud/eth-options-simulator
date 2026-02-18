@@ -716,6 +716,20 @@ try:
                         st.success(text + f" | Crédito: +${total_entry:,.2f}")
 
 
+                    # =========================
+                    # RESUMO GERAL DA CARTEIRA
+                    # =========================
+                    st.markdown("## 📈 Resumo Geral")
+
+                    c1, c2, c3 = st.columns(3)
+
+                    c1.metric("Capital Inicial", f"${portfolio_entry_total:,.2f}")
+                    c2.metric("Valor Atual", f"${portfolio_current_total:,.2f}")
+
+                    if portfolio_pl_total >= 0:
+                        c3.success(f"P/L Total: +${portfolio_pl_total:,.2f}")
+                    else:
+                        c3.error(f"P/L Total: ${portfolio_pl_total:,.2f}")
 
 
 
@@ -726,6 +740,7 @@ except Exception as e:
 
     
      
+
 
 
 
