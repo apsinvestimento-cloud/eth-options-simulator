@@ -337,21 +337,6 @@ if st.session_state.run_simulation:
             "<extra></extra>"
     ))
 
-    fig.add_trace(go.Scatter(
-        x=prices,
-        y=loss,
-        fill='tozeroy',
-        mode='lines',
-        name='Prejuízo',
-        line=dict(color='red'),
-        hovertemplate=
-            "Preço: $%{x:,.0f}<br>"
-            "Prejuízo: $%{y:,.2f}"
-            "<extra></extra>"
-    ))
-
-
-
 
     fig.add_hline(y=0, line_dash="dot")
     fig.add_vline(x=spot, line_dash="dash", annotation_text="Spot")
@@ -373,5 +358,6 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
