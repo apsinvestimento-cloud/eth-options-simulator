@@ -228,10 +228,13 @@ with left:
             "side": side,
             "strike": strike,
             "quantity": quantity,
+            "premium": premium,                     # ETH
+            "premium_usd": premium * spot_price,    # USD
             "premium_entry_usd": premium * spot_price,
             "iv_entry": iv,
             "enabled": True
     })
+
 
 
 
@@ -257,9 +260,17 @@ with right:
         col2.write(f"{leg['side'].upper()} {leg['type'].upper()}")
         col3.write(f"Strike {leg['strike']}")
         col4.write(f"Qty {leg['quantity']}")
-        col5.write(
-            f"{leg['premium']:.4f} ETH (~${leg.get('premium_usd', leg['premium']*spot_price):.2f})"
-        )
+        premium_eth = leg.get("premium", 0)
+premium_usd = leg.get("premium_usd")
+
+# Compatibilidade com dados antigos
+if premium_usd is None:
+    premium_usd = leg.get("premium_entry_usd", 0)
+
+col5.write(
+    f"{premium_eth:.4f} ETH (~${premium_usd:.2f})"
+)
+
 
         if col6.button("❌", key=f"remove_{i}"):
             legs_to_remove = i
@@ -336,35 +347,50 @@ if st.session_state.run_simulation:
         st.warning("Nenhuma perna ativa")
         st.stop()
 
-    # =========================
-    # CÁLCULO DO PAYOFF
-    # =========================
-    spot = spot_price
-    prices = np.linspace(0.01, spot * 2, 400)
-    total_payoff = np.zeros_like(prices)
+   # =========================
+# CÁLCULO DO PAYOFF (seguro e compatível)
+# =========================
 
-    for leg in active_legs:
+spot = float(spot_price)
+prices = np.linspace(0.01, spot * 2, 400)
+total_payoff = np.zeros_like(prices, dtype=float)
 
-        # Intrínseco
-        if leg["type"] == "call":
-            intrinsic = np.maximum(prices - leg["strike"], 0)
-        else:
-            intrinsic = np.maximum(leg["strike"] - prices, 0)
+for leg in active_legs:
 
-        # Premium em USD
-        premium_usd = leg["premium"] * spot
+    # -------- Normalização da perna --------
+    leg_type = leg.get("type")
+    side = leg.get("side")
+    strike = float(leg.get("strike", 0))
+    qty = float(leg.get("quantity", 0))
 
-        # Payoff
-        if leg["side"] == "buy":
-            payoff_leg = intrinsic - premium_usd
-        else:
-            payoff_leg = premium_usd - intrinsic
+    # Premium em USD (compatível com dados antigos)
+    premium_usd = (
+        leg.get("premium_usd")
+        or leg.get("premium_entry_usd")
+        or 0
+    )
+    premium_usd = float(premium_usd)
 
-        payoff_leg = payoff_leg * leg["quantity"]
+    # -------- Valor intrínseco --------
+    if leg_type == "call":
+        intrinsic = np.maximum(prices - strike, 0)
+    else:
+        intrinsic = np.maximum(strike - prices, 0)
 
-        total_payoff += payoff_leg
+    # -------- Payoff da perna --------
+    if side == "buy":
+        payoff_leg = intrinsic - premium_usd
+    else:
+        payoff_leg = premium_usd - intrinsic
 
-    payoff = total_payoff
+    # Ajusta pela quantidade
+    payoff_leg = payoff_leg * qty
+
+    # Soma ao payoff total
+    total_payoff += payoff_leg
+
+# Resultado final
+payoff = total_payoff
 
 
     # (segue métricas e gráfico normalmente)
@@ -573,6 +599,7 @@ except Exception as e:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
