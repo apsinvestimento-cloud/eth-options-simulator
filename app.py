@@ -249,9 +249,6 @@ if st.button("Salvar estratégia"):
             st.error(f"Erro ao salvar: {e}")
 
 
-    simulate_button = st.button("Simular estratégia")
-
-
 
 # =========================
 # SIMULAÇÃO
@@ -260,7 +257,7 @@ if st.button("Salvar estratégia"):
 if "run_simulation" not in st.session_state:
     st.session_state.run_simulation = False
 
-if simulate_button:
+if st.button("Simular estratégia"):
     st.session_state.run_simulation = True
 
 
@@ -408,6 +405,7 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
