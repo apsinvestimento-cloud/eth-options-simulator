@@ -532,9 +532,20 @@ try:
     if not strategies:
         st.info("Nenhuma estratégia salva.")
     else:
+
+        # =========================
+        # TOTAIS DA CARTEIRA
+        # =========================
+        portfolio_entry_total = 0
+        portfolio_current_total = 0
+        portfolio_pl_total = 0
+        
         for strat in strategies:
 
             legs = strat["legs"]
+
+            
+
 
             # =========================
             # CÁLCULOS
@@ -563,7 +574,9 @@ try:
                 else:
                     entry_value += premium_entry * qty
 
-                # Valor atual de mercado
+                # =========================
+                # VALOR ATUAL DE MERCADO
+                # =========================
                 instrument_name = leg.get("instrument_name")
 
                 if instrument_name:
@@ -579,28 +592,41 @@ try:
 
                 current_value += value_now
 
-
+                # =========================
                 # P/L
+                # =========================
                 if leg["side"] == "buy":
                     pl_leg = value_now - (premium_entry * qty)
                 else:
                     pl_leg = (premium_entry * qty) - value_now
 
-
                 total_pl += pl_leg
 
+
+            # =========================
+            # SOMAR AO TOTAL DA CARTEIRA
+            # =========================
+            portfolio_entry_total += entry_value
+            portfolio_current_total += current_value
+            portfolio_pl_total += total_pl
+
+
+            # =========================
+            # MÉTRICAS AUXILIARES
+            # =========================
             avg_iv = sum(iv_list) / len(iv_list) if iv_list else 0
 
             # Strikes únicos (ordenados)
             strikes_text = ", ".join([str(int(s)) for s in sorted(set(strikes))])
+
 
             # =========================
             # EXIBIÇÃO
             # =========================
             with st.expander(f"{strat['name']} | Strikes: {strikes_text}"):
 
-                col1, col2, col3, col4 = st.columns([1,1,1,0.7])
-              
+                col1, col2, col3, col4 = st.columns([1, 1, 1, 0.7])
+
                 # Entrada
                 if entry_value >= 0:
                     col1.success(f"Crédito entrada: +${entry_value:,.2f}")
@@ -617,6 +643,7 @@ try:
                     col3.error(f"P/L: ${total_pl:,.2f}")
 
                 st.caption(f"IV média na entrada: {avg_iv*100:.1f}%")
+
                 created_at_raw = strat.get("created_at")
 
                 try:
@@ -627,7 +654,6 @@ try:
 
                 st.caption(f"Criada em: {created_at_formatted}")
 
-
                 st.markdown("**Pernas:**")
 
                 for leg in legs:
@@ -636,6 +662,7 @@ try:
                     opt_type = leg.get("type", "").upper()
                     strike = leg.get("strike", 0)
                     qty = leg.get("quantity", 0)
+
 
                     # =========================
                     # VENCIMENTO (robusto)
@@ -699,6 +726,7 @@ except Exception as e:
 
     
      
+
 
 
 
