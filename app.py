@@ -617,7 +617,16 @@ try:
                     col3.error(f"P/L: ${total_pl:,.2f}")
 
                 st.caption(f"IV média na entrada: {avg_iv*100:.1f}%")
-                st.caption(f"Criada em: {strat['created_at']}")
+                created_at_raw = strat.get("created_at")
+
+                try:
+                    created_at_dt = datetime.fromisoformat(created_at_raw)
+                    created_at_formatted = created_at_dt.strftime("%d/%m/%Y às %H:%M")
+                except:
+                    created_at_formatted = created_at_raw
+
+                st.caption(f"Criada em: {created_at_formatted}")
+
 
                 st.markdown("**Pernas:**")
 
@@ -690,6 +699,7 @@ except Exception as e:
 
     
      
+
 
 
 
