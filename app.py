@@ -6,7 +6,24 @@ import math
 import time
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
+from supabase import create_client
 
+# =========================
+# SUPABASE CONFIG
+# =========================
+
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def save_strategy(name, spot_entry, legs):
+    data = {
+        "name": name,
+        "spot_entry": spot_entry,
+        "legs": legs
+    }
+    supabase.table("strategies").insert(data).execute()
 
 st.set_page_config(page_title="ETH Options Simulator", layout="wide")
 
@@ -358,6 +375,7 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
