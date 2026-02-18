@@ -1,4 +1,4 @@
-import streamlit as st
+    import streamlit as st
 import requests
 import plotly.graph_objects as go
 import numpy as np
@@ -671,6 +671,16 @@ try:
                         f"Exp: {exp_date}"
                     )
 
+                    # =========================
+                    # EXIBIÇÃO
+                    # =========================
+                    if leg.get("side") == "buy":
+                        st.error(text + f" | Débito: -${total_entry:,.2f}")
+                    else:
+                        st.success(text + f" | Crédito: +${total_entry:,.2f}")
+
+
+
 
 
 
@@ -680,6 +690,7 @@ except Exception as e:
 
     
      
+
 
 
 
