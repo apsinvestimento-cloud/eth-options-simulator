@@ -25,6 +25,15 @@ def save_strategy(name, spot_entry, legs):
     }
     supabase.table("strategies").insert(data).execute()
 
+def load_strategies():
+    response = supabase.table("strategies") \
+        .select("*") \
+        .order("created_at", desc=True) \
+        .execute()
+
+    return response.data
+
+
 st.set_page_config(page_title="ETH Options Simulator", layout="wide")
 
 st.title("ETH Options Simulator")
@@ -345,6 +354,39 @@ if st.session_state.run_simulation:
     c4.metric("Break-even", ", ".join([f"{be:.0f}" for be in breakeven_points]) if breakeven_points else "-")
     c5.metric("Prob. Lucro", f"{prob_profit:.1f}%")
 
+# =========================
+# CARTEIRA
+# =========================
+st.markdown("---")
+st.subheader("📊 Carteira de Estratégias")
+
+try:
+    strategies = load_strategies()
+
+    if not strategies:
+        st.info("Nenhuma estratégia salva.")
+    else:
+        for strat in strategies:
+
+            with st.expander(
+                f"{strat['name']} | Entrada: ${strat['spot_entry']:,.2f}"
+            ):
+
+                legs = strat["legs"]
+
+                for leg in legs:
+                    st.write(
+                        f"{leg['side'].upper()} {leg['type'].upper()} | "
+                        f"Strike {leg['strike']} | "
+                        f"Qty {leg['quantity']}"
+                    )
+
+                st.caption(f"Criada em: {strat['created_at']}")
+
+except Exception as e:
+    st.error(f"Erro ao carregar carteira: {e}")
+
+    
        # =========================
     # GRÁFICO
     # =========================
@@ -405,6 +447,7 @@ if st.session_state.run_simulation:
     fig.update_xaxes(range=[spot * 0.5, spot * 1.5])
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
